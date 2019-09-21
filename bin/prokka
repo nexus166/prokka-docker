@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+MOUNT="${1}"
+_full="$(realpath ${MOUNT})"
+_base="$(basename ${_full})"
+me=$(whoami)
+_uid=$(id -u $me)
+_gid=$(id -g $me)
+
+IMAGE="nexus166/prokka"
+_img="${IMAGE}:${me}"
+
+docker image inspect ${_img} 1>/dev/null || ( \
+        docker build \
+                --build-arg UID="${_uid}" \
+                --build-arg GID="${_gid}" \
+                --build-arg NAME="${me}" \
+                --tag "${_img}" \
+                "https://raw.githubusercontent.com/nexus166/prokka-docker/master/Dockerfile"
+)
+
+DOCKER_CONTENT_TRUST= docker run -ti --rm --volume "${_full}:${_full}" "${_img}" ${@:2}
